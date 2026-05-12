@@ -1,0 +1,66 @@
+name: CW 채용 인텔리전스
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  collect-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install requests --quiet
+
+      - name: 수집 실행
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MS_TENANT_ID:      ${{ secrets.MS_TENANT_ID }}
+          MS_CLIENT_ID:      ${{ secrets.MS_CLIENT_ID }}
+          MS_CLIENT_SECRET:  ${{ secrets.MS_CLIENT_SECRET }}
+          ALERT_EMAIL_TO:    ${{ secrets.ALERT_EMAIL_TO }}
+          ALERT_EMAIL_FROM:  ${{ secrets.ALERT_EMAIL_FROM }}
+          TZ: Asia/Seoul
+        run: python run_report.py
+
+      - name: 결과 확인
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          if os.path.exists('web/data.json'):
+              data = json.load(open('web/data.json'))
+              for r in data[:3]:
+                  n = len(r.get('items',[]))
+                  flag = '✅' if n >= 5 else '⚠️ '
+                  print(f"{flag} {r['date']}: {n}건")
+          PY
+
+      - name: 아카이브 커밋
+        if: success()
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "📊 채용인텔 자동수집"
+          file_pattern: "web/data.json reports/*.json"
+          commit_user_name: CW Intel Bot
+          commit_user_email: bot@cw.kr
+
+      - name: GitHub Pages 배포
+        if: success()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./web
+          publish_branch: gh-pages
+          keep_files: false
