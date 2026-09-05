@@ -1,5 +1,11 @@
 [
   {
+    "date": "2026-09-05",
+    "summary": "분석 실패",
+    "contact_targets": [],
+    "items": []
+  },
+  {
     "date": "2026-09-04",
     "summary": "분석 실패",
     "contact_targets": [],
@@ -529,12 +535,6 @@
   },
   {
     "date": "2026-06-08",
-    "summary": "분석 실패",
-    "contact_targets": [],
-    "items": []
-  },
-  {
-    "date": "2026-06-07",
     "summary": "분석 실패",
     "contact_targets": [],
     "items": []
